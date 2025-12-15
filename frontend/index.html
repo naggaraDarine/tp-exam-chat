@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TP Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        header {
+            background: #4CAF50;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        #chat-box {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            border-top: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
+        }
+        .message {
+            margin-bottom: 1rem;
+        }
+        .message-author {
+            font-weight: bold;
+        }
+        .message-time {
+            font-size: 0.8rem;
+            color: gray;
+        }
+        footer {
+            display: flex;
+            padding: 0.5rem;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 0.5rem;
+            font-size: 1rem;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            margin-left: 0.5rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>TP Chat</h1>
+</header>
+
+<div id="chat-box"></div>
+
+<footer>
+    <input type="text" id="pseudo" placeholder="Votre pseudo">
+    <input type="text" id="message" placeholder="Votre message">
+    <button onclick="sendMessage()">Envoyer</button>
+</footer>
+
+<script>
+const chatBox = document.getElementById('chat-box');
+
+function refreshMessages() {
+    fetch('http://localhost:3000/messages')
+        .then(res => res.json())
+        .then(messages => {
+            chatBox.innerHTML = '';
+            messages.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = 'message';
+                div.innerHTML =
+                    `<span class="message-author">${msg.pseudo}:</span>
+                     ${msg.text}
+                     <span class="message-time">
+                        (${new Date(msg.time).toLocaleTimeString()})
+                     </span>`;
+                chatBox.appendChild(div);
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+}
+
+setInterval(refreshMessages, 3000);
+
+function sendMessage() {
+    const pseudo = document.getElementById('pseudo').value.trim();
+    const message = document.getElementById('message').value.trim();
+
+    if (!pseudo || !message) {
+        alert("Pseudo et message requis !");
+        return;
+    }
+
+    fetch('http://localhost:3000/messages', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            pseudo: pseudo,
+            text: message
+        })
+    })
+    .then(res => res.json())
+    .then(() => {
+        document.getElementById('message').value = '';
+        refreshMessages();
+    });
+}
+
+refreshMessages();
+</script>
+
+
+</body>
+</html>
+
