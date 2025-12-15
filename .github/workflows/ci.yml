@@ -1,0 +1,71 @@
+name: CI/CD TP Chat
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    services:
+      backend:
+        image: node:20-alpine
+        ports:
+          - 3000:3000
+        options: >-
+          --health-cmd "curl --fail http://localhost:3000/messages || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        volumes:
+          - ./backend:/app
+        working-directory: /app
+        command: sh -c "npm install && npm start"
+
+      frontend:
+        image: nginx:alpine
+        ports:
+          - 8080:80
+        volumes:
+          - ./frontend:/usr/share/nginx/html
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Build & test backend
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm install
+
+      - name: Test backend start
+        working-directory: backend
+        run: |
+          node server.js &
+          sleep 5
+          curl -f http://localhost:3000/messages
+
+      # Build frontend (vérifier que le HTML existe)
+      - name: Check frontend
+        working-directory: frontend
+        run: |
+          if [ ! -f index.html ]; then
+            echo "index.html manquant" && exit 1
+          fi
+
+      # Optionnel : Linter HTML/CSS (facultatif)
+      # - name: HTML/CSS lint
+      #   run: echo "Linting frontend..."
+
+      - name: Success message
+        run: echo "Frontend & Backend build/test successful ✅"
+
+
