@@ -76,28 +76,34 @@
 <script>
 const chatBox = document.getElementById('chat-box');
 
+// URL du backend Render
+const BACKEND_URL = 'https://chat-backend-e5n9.onrender.com';
+
+// Rafraîchissement automatique des messages
 function refreshMessages() {
-    fetch('http://localhost:3000/messages')
+    fetch(`${BACKEND_URL}/messages`)
         .then(res => res.json())
         .then(messages => {
             chatBox.innerHTML = '';
             messages.forEach(msg => {
                 const div = document.createElement('div');
                 div.className = 'message';
-                div.innerHTML =
-                    `<span class="message-author">${msg.pseudo}:</span>
-                     ${msg.text}
-                     <span class="message-time">
-                        (${new Date(msg.time).toLocaleTimeString()})
-                     </span>`;
+                div.innerHTML = `
+                    <span class="message-author">${msg.pseudo}:</span>
+                    ${msg.text}
+                    <span class="message-time">(${new Date(msg.time).toLocaleTimeString()})</span>
+                `;
                 chatBox.appendChild(div);
             });
             chatBox.scrollTop = chatBox.scrollHeight;
-        });
+        })
+        .catch(err => console.error('Erreur fetch messages:', err));
 }
 
+// Rafraîchissement toutes les 3 secondes
 setInterval(refreshMessages, 3000);
 
+// Fonction pour envoyer un message
 function sendMessage() {
     const pseudo = document.getElementById('pseudo').value.trim();
     const message = document.getElementById('message').value.trim();
@@ -107,26 +113,22 @@ function sendMessage() {
         return;
     }
 
-    fetch('http://localhost:3000/messages', {
+    fetch(`${BACKEND_URL}/messages`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            pseudo: pseudo,
-            text: message
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pseudo, text: message })
     })
     .then(res => res.json())
     .then(() => {
         document.getElementById('message').value = '';
         refreshMessages();
-    });
+    })
+    .catch(err => console.error('Erreur send message:', err));
 }
 
+// Chargement initial des messages
 refreshMessages();
 </script>
-
 
 </body>
 </html>
